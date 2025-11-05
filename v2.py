@@ -40,6 +40,66 @@ class Player:
 	def __repr__(self):
 		return f"Player {self.name}: £{self.money}"
 
+class Node:
+	def __init__(self, player):
+		self.player = player
+		self.next = None
+
+class PlayerLinkedList:
+	def __init__(self):
+		self.head = None
+	
+	def append(self, player):
+		new = Node(player)
+		if not self.head:
+			self.head = new
+			new.next = new
+		else:
+			this = self.head
+			while this.next != self.head:
+				this = this.next
+			this.next = new
+			new.next = self.head
+	
+	def traverse(self):
+		this = self.head
+		while True:
+			print(f"{this.player} : ", end="")
+			this = this.next
+			if this == self.head:
+				break
+		print(this.player)
+	
+	def changeHead(self, player):
+		this = self.head
+		while this.player.name != player:
+			this = this.next
+		self.head = this
+	
+	def delete(self, player):
+		if self.head.player.name == player:
+			this = self.head
+			while this.next != self.head:
+				this = this.next
+			this.next = self.head.next
+			self.head = self.head.next
+			return
+		
+		this = self.head
+		while this.next.player.name != player:
+			this = this.next
+		this.next = this.next.next
+	
+	def createList(self):
+		this = self.head
+		l = []
+		while True:
+			l.append(this.player)
+			this = this.next
+			if this == self.head:
+				break
+		return l
+
 class Pot:
 	def __init__(self):
 		self.lastTotal = 0
@@ -76,7 +136,10 @@ class Pot:
 
 class HoldEm:
 	def __init__(self, small, big, buy, players):
-		self.players = [Player(x, buy) for x in players]
-		self.button = 0
+		self.players = PlayerLinkedList()
+		for p in players:
+			self.players.append(Player(p, buy))
+		self.button = random.choice(players)
+		self.players.changeHead(self.button)
 
 game = HoldEm(1, 2, 50, ["Toby", "Lucy", "Tanheed", "Josh", "Liam", "Tom", "Harvey"])
