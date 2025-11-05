@@ -90,11 +90,12 @@ class PlayerLinkedList:
 			this = this.next
 		this.next = this.next.next
 	
-	def createList(self):
+	def createList(self, states=[0,1,2,3]):
 		this = self.head
 		l = []
 		while True:
-			l.append(this.player)
+			if this.player.state in states:
+				l.append(this.player)
 			this = this.next
 			if this == self.head:
 				break
@@ -141,5 +142,22 @@ class HoldEm:
 			self.players.append(Player(p, buy))
 		self.button = random.choice(players)
 		self.players.changeHead(self.button)
+		self.small = small
+		self.big = big
+		self.deck = Deck()
+		self.pots = [Pot()]
+		self.playerHands = {}
+		self.community = []
+	
+	def newRound(self):
+		fullList = self.players.createList()
+		for p in fullList:
+			p.latestPot = 0
+			if p.money == 0:
+				p.state = 0
+			else:
+				p.state = 1
+		fullList = self.players.createList([1])
+
 
 game = HoldEm(1, 2, 50, ["Toby", "Lucy", "Tanheed", "Josh", "Liam", "Tom", "Harvey"])
