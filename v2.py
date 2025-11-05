@@ -41,7 +41,7 @@ class Player:
 		return f"Player {self.name}: £{self.money}"
 
 class Node:
-	def __init__(self, player):
+	def __init__(self, player: Player):
 		self.player = player
 		self.next = None
 
@@ -49,7 +49,7 @@ class PlayerLinkedList:
 	def __init__(self):
 		self.head = None
 	
-	def append(self, player):
+	def append(self, player: Player):
 		new = Node(player)
 		if not self.head:
 			self.head = new
@@ -70,13 +70,13 @@ class PlayerLinkedList:
 				break
 		print(this.player)
 	
-	def changeHead(self, player):
+	def changeHead(self, player: Player):
 		this = self.head
 		while this.player.name != player:
 			this = this.next
 		self.head = this
 	
-	def delete(self, player):
+	def delete(self, player: Player):
 		if self.head.player.name == player:
 			this = self.head
 			while this.next != self.head:
@@ -90,7 +90,7 @@ class PlayerLinkedList:
 			this = this.next
 		this.next = this.next.next
 	
-	def createList(self, states=[0,1,2,3]):
+	def createList(self, states=[0,1,2,3]) -> list[Player]:
 		this = self.head
 		l = []
 		while True:
@@ -107,7 +107,7 @@ class Pot:
 		self.bet = 0
 		self.bets = {}
 	
-	def playerBet(self, player, bet):
+	def placeBet(self, player, bet):
 		total = self.bets.get(player, 0) + bet
 		self.bets[player] = total
 		if total > self.bet:
@@ -149,6 +149,51 @@ class HoldEm:
 		self.playerHands = {}
 		self.community = []
 	
+	def handleSidePot(self, pot: Pot, bet):
+		sidePot = pot.createSidePot(bet)
+
+		if sidePot:
+			self.pots.insert(self.pots.index(pot) + 1, sidePot)
+
+			for player in self.players.createList([1, 2]):
+				toCall = pot.bet - pot.bets.get(player, 0)
+				if player.money > toCall:
+					player.latestPot += 1
+
+	def handleBet(self, player: Player, bet):
+		pot = player.latestPot
+
+		if bet > player.money:
+			bet = player.money
+			player.state = 3
+		if bet == player.money:
+			player.state = 3
+
+		moneyToTake = bet
+		
+		# place bets in side pots if applicable
+		for i in range(pot):
+			toCall = self.pots[i].bet - self.pots[i].bets.get(player, 0)
+			amount -= toCall
+			self.pots[i].placeBet(player, toCall)
+		
+		# if bet is raise then make all other players go again
+		if amount > self.pots[i].bet:
+			self.pots[i].placeBet(player, amount)
+			for p in self.pots[i].bets.keys():
+				if (self.pots[i].bet - self.pots[i].bets.get(p, 0)) > 0 and p.state == 1:
+					p.state = 2
+		else:
+			self.pots[i].placeBet(player, amount)
+
+		# split pot if player is all-in
+		allIns = [p for p in self.pots[i].bets.keys() if p.state == 3]
+		if allIns:
+			newBet = min([self.pots[i].bets[p] for p in allIns])
+			self.handleSidePot(self.pots[i], newBet)
+		
+		player.money -= moneyToTake
+
 	def newRound(self):
 		fullList = self.players.createList()
 		for p in fullList:
@@ -156,8 +201,7 @@ class HoldEm:
 			if p.money == 0:
 				p.state = 0
 			else:
-				p.state = 1
-		fullList = self.players.createList([1])
-
+				p.state = 2
+		fullList = self.players.createList([2])
 
 game = HoldEm(1, 2, 50, ["Toby", "Lucy", "Tanheed", "Josh", "Liam", "Tom", "Harvey"])
