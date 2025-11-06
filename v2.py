@@ -336,6 +336,29 @@ class HoldEm:
 			return cards
 		return []
 
+	def multiplesCheck(self, cards: list[Card]) -> list[Card]:
+		cards.sort(key=lambda x: x.value, reverse=True)
+		cardCounts = Counter([x.value for x in cards])
+		mostCommon = cardCounts.most_common(1)[0]
+
+		if mostCommon[1] == 4:
+			return [4, [x for x in cards if x.value == mostCommon[0]] + [[x for x in cards if x.value != mostCommon[0]][0]]]
+		
+		fullTwo = cardCounts.most_common(2)
+		if fullTwo[0][1] == 3 and fullTwo[1][1] >= 2:
+			return [3, [x for x in cards if x.value == mostCommon[0]] + [x for x in cards if x.value == fullTwo[1][0]][:2]]
+		
+		if mostCommon[1] == 3:
+			return [2, [x for x in cards if x.value == mostCommon[0]] + [x for x in cards if x.value != mostCommon[0]][:2]]
+		
+		if fullTwo[0][1] == fullTwo[1][1] == 2:
+			return [1, [x for x in cards if x.value in [fullTwo[0][0], fullTwo[1][0]]] + [[x for x in cards if x.value != mostCommon[0]][0]]]
+		
+		if mostCommon[1] == 2:
+			return [0, [x for x in cards if x.value == mostCommon[0]] + [x for x in cards if x.value != mostCommon[0]][:3]]
+		
+		return [-1, cards[:5]]
+
 	def findWinners(self, players: list[Player]) -> list[Player]:
 		playerHands = {x: self.playerHands[x] for x in players}
 	
