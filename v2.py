@@ -296,6 +296,37 @@ class HoldEm:
 		if len(self.players.createList([1])) <= 1:
 			return True
 		return False
+	
+	def findWinners(self, players: list[Player]) -> list[Player]:
+		playerHands = {x: self.playerHands[x] for x in players}
+	
+	def end(self):
+		self.players.head = self.button
+
+		for pot in self.pots:
+			playersIn = list(pot.bets.keys())
+			if len(playersIn) == 1:
+				total = pot.lastTotal + sum(pot.bets.values())
+				playersIn[0].money += total
+				print(f"{playersIn[0].name} wins £{total}")
+				continue
+
+			if len(self.community) != 5:
+				self.community += self.deck.deal(5 - self.community)
+				print(f"Community cards are now {str(self.community)[1:-1]}")
+			
+			winners = self.findWinners(self, playersIn)
+			win = (pot.lastTotal + sum(pot.bets.values())) // len(winners)
+			for player in winners:
+				player.money += win
+			
+			left = (pot.lastTotal + sum(pot.bets.values())) - (win * len(winners))
+			if left:
+				playerOrder = self.players.createList()
+				for player in playerOrder:
+					if player in winners:
+						player.money += left
+						break
 
 	def newRound(self):
 		fullList = self.players.createList()
@@ -336,6 +367,9 @@ class HoldEm:
 		self.betting()
 		print(self.players.createList())
 		print(self.playerHands)
+
+		if self.checkIfOver():
+			self.end()
 
 game = HoldEm(1, 2, 50, ["Toby", "Lucy", "Tanheed", "Josh", "Liam", "Tom", "Harvey"])
 game.newRound()
