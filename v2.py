@@ -342,11 +342,11 @@ class HoldEm:
 		mostCommon = cardCounts.most_common(1)[0]
 
 		if mostCommon[1] == 4:
-			return [4, [x for x in cards if x.value == mostCommon[0]] + [[x for x in cards if x.value != mostCommon[0]][0]]]
+			return [6, [x for x in cards if x.value == mostCommon[0]] + [[x for x in cards if x.value != mostCommon[0]][0]]]
 		
 		fullTwo = cardCounts.most_common(2)
 		if fullTwo[0][1] == 3 and fullTwo[1][1] >= 2:
-			return [3, [x for x in cards if x.value == mostCommon[0]] + [x for x in cards if x.value == fullTwo[1][0]][:2]]
+			return [5, [x for x in cards if x.value == mostCommon[0]] + [x for x in cards if x.value == fullTwo[1][0]][:2]]
 		
 		if mostCommon[1] == 3:
 			return [2, [x for x in cards if x.value == mostCommon[0]] + [x for x in cards if x.value != mostCommon[0]][:2]]
@@ -361,7 +361,70 @@ class HoldEm:
 
 	def findWinners(self, players: list[Player]) -> list[Player]:
 		playerHands = {x: self.playerHands[x] for x in players}
-	
+		playerScores = {x: None for x in players}
+		playerBestHands = {x: None for x in players}
+
+		for player in players:
+			cards = playerHands[player] + self.community
+
+			x = self.royalFlushCheck(cards)
+			if x:
+				playerScores[player] = 8
+				playerBestHands[player] = x
+				break
+
+			x = self.straightFlushCheck(cards)
+			if x:
+				playerScores[player] = 7
+				playerBestHands[player] = x
+				break
+
+			ans = self.multiplesCheck(cards)
+			if ans[0] == 6:
+				playerScores[player] = 6
+				playerBestHands[player] = ans[1]
+				break
+			
+			if ans[0] == 5:
+				playerScores[player] = 5
+				playerBestHands[player] = ans[1]
+				break
+
+			x = self.flushCheck(cards)
+			if x:
+				playerScores[player] = 4
+				playerBestHands[player] = x[:5]
+				break
+
+			x = self.straightCheck(cards)
+			if x:
+				playerScores[player] = 3
+				playerBestHands[player] = x[:5]
+				break
+
+			if ans[0] == 2:
+				playerScores[player] = 2
+				playerBestHands[player] = ans[1]
+				break
+			
+			if ans[0] == 1:
+				playerScores[player] = 1
+				playerBestHands[player] = ans[1]
+				break
+
+			if ans[0] == 0:
+				playerScores[player] = 0
+				playerBestHands[player] = ans[1]
+				break
+			
+			playerScores[player] = -1
+			playerBestHands[player] = ans[1]
+
+		bestHand = max(playerScores.values())
+		players = [x for x in players if playerScores[x] == bestHand]
+		if len(players) == 1:
+			return players
+
 	def end(self):
 		self.players.head = self.button
 
