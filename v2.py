@@ -321,6 +321,21 @@ class HoldEm:
 				return straight
 		return []
 
+	def straightFlushCheck(self, cards: list[Card]) -> list[Card]:
+		cards = self.flushCheck(cards)
+		if not cards:
+			return []
+		
+		return self.straightCheck(cards)[:5]
+
+	def royalFlushCheck(self, cards: list[Card]) -> list[Card]:
+		cards = self.straightFlushCheck(cards)
+		if not cards:
+			return []
+		if cards[0].value == 12:
+			return cards
+		return []
+
 	def findWinners(self, players: list[Player]) -> list[Player]:
 		playerHands = {x: self.playerHands[x] for x in players}
 	
