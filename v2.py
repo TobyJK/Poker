@@ -12,6 +12,9 @@ class Card:
 	def __repr__(self):
 		return f"{self.mapVals[self.value]} of {self.mapSuits[self.suit]}"
 
+	def __eq__(self, other) : 
+		return self.__dict__ == other.__dict__
+
 class Deck:
 	def __init__(self):
 		self.suits = [x for x in range(4)]
@@ -302,8 +305,21 @@ class HoldEm:
 		commonSuit = Counter([x.suit for x in cards]).most_common(1)[0]
 		if commonSuit[1] < 5:
 			return []
-		cardsInSuit = sorted([x for x in cards if x.suit == commonSuit[0]], key=lambda x: x.value, reverse=True)[:5]
+		cardsInSuit = sorted([x for x in cards if x.suit == commonSuit[0]], key=lambda x: x.value, reverse=True)
 		return cardsInSuit
+
+	def straightCheck(self, cards: list[Card]) -> list[Card]:
+		cards.sort(key=lambda x: x.value, reverse=True)
+		for i in range(len(cards) - 4):
+			straight = [cards[i]]
+			for j in range(i, len(cards) - 1):
+				if cards[j].value - cards[j + 1].value == 1:
+					straight.append(cards[j + 1])
+				else:
+					break
+			if len(straight) >= 5:
+				return straight
+		return []
 
 	def findWinners(self, players: list[Player]) -> list[Player]:
 		playerHands = {x: self.playerHands[x] for x in players}
