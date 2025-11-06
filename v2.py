@@ -1,4 +1,5 @@
 import random
+from collections import Counter
 
 class Card:
 	def __init__(self, suit, value):
@@ -297,6 +298,13 @@ class HoldEm:
 			return True
 		return False
 	
+	def flushCheck(self, cards: list[Card]) -> list[Card]:
+		commonSuit = Counter([x.suit for x in cards]).most_common(1)[0]
+		if commonSuit[1] < 5:
+			return []
+		cardsInSuit = sorted([x for x in cards if x.suit == commonSuit[0]], key=lambda x: x.value, reverse=True)[:5]
+		return cardsInSuit
+
 	def findWinners(self, players: list[Player]) -> list[Player]:
 		playerHands = {x: self.playerHands[x] for x in players}
 	
@@ -371,5 +379,6 @@ class HoldEm:
 		if self.checkIfOver():
 			self.end()
 
-game = HoldEm(1, 2, 50, ["Toby", "Lucy", "Tanheed", "Josh", "Liam", "Tom", "Harvey"])
-game.newRound()
+if __name__ == "__main__":
+	game = HoldEm(1, 2, 50, ["Toby", "Lucy", "Tanheed", "Josh", "Liam", "Tom", "Harvey"])
+	game.newRound()
