@@ -134,6 +134,9 @@ class Pot:
 			self.lastTotal += self.bets.pop(player)
 	
 	def createSidePot(self, newBet):
+		if newBet <= self.bet:
+			return None
+
 		sidePot = Pot()
 		self.bet = newBet
 
@@ -336,7 +339,7 @@ class HoldEm:
 			return cards
 		return []
 
-	def multiplesCheck(self, cards: list[Card]) -> list[Card]:
+	def multiplesCheck(self, cards: list[Card]) -> list[int, list[Card]]:
 		cards.sort(key=lambda x: x.value, reverse=True)
 		cardCounts = Counter([x.value for x in cards])
 		mostCommon = cardCounts.most_common(1)[0]
@@ -359,6 +362,25 @@ class HoldEm:
 		
 		return [-1, cards[:5]]
 
+	def bestHandKickers(self, num, hands: dict[Player: list[Card]]) -> list[Player]:
+		players = [x for x in hands]
+		i = 0
+		while i < num:
+			highestCard = -1
+			best = []
+			for player in players:
+				firstCard = hands[player][i].value
+				if firstCard > highestCard:
+					highestCard = firstCard
+					best = [player]
+				elif firstCard == highestCard:
+					best.append(player)
+			if len(best) == 1:
+				return best
+			i += 1
+			players = [x for x in best]
+		return best
+
 	def findWinners(self, players: list[Player]) -> list[Player]:
 		playerHands = {x: self.playerHands[x] for x in players}
 		playerScores = {x: None for x in players}
@@ -371,59 +393,61 @@ class HoldEm:
 			if x:
 				playerScores[player] = 8
 				playerBestHands[player] = x
-				break
+				continue
 
 			x = self.straightFlushCheck(cards)
 			if x:
 				playerScores[player] = 7
 				playerBestHands[player] = x
-				break
+				continue
 
 			ans = self.multiplesCheck(cards)
 			if ans[0] == 6:
 				playerScores[player] = 6
 				playerBestHands[player] = ans[1]
-				break
+				continue
 			
 			if ans[0] == 5:
 				playerScores[player] = 5
 				playerBestHands[player] = ans[1]
-				break
+				continue
 
 			x = self.flushCheck(cards)
 			if x:
 				playerScores[player] = 4
 				playerBestHands[player] = x[:5]
-				break
+				continue
 
 			x = self.straightCheck(cards)
 			if x:
 				playerScores[player] = 3
 				playerBestHands[player] = x[:5]
-				break
+				continue
 
 			if ans[0] == 2:
 				playerScores[player] = 2
 				playerBestHands[player] = ans[1]
-				break
+				continue
 			
 			if ans[0] == 1:
 				playerScores[player] = 1
 				playerBestHands[player] = ans[1]
-				break
+				continue
 
 			if ans[0] == 0:
 				playerScores[player] = 0
 				playerBestHands[player] = ans[1]
-				break
+				continue
 			
 			playerScores[player] = -1
 			playerBestHands[player] = ans[1]
 
 		bestHand = max(playerScores.values())
 		players = [x for x in players if playerScores[x] == bestHand]
-		if len(players) == 1:
+		if len(players) == 1 or bestHand == 8:
 			return players
+		
+		return self.bestHandKickers(5, {x: playerBestHands[x] for x in players})
 
 	def end(self):
 		self.players.head = self.button
@@ -437,10 +461,11 @@ class HoldEm:
 				continue
 
 			if len(self.community) != 5:
-				self.community += self.deck.deal(5 - self.community)
+				self.community += self.deck.deal(5 - len(self.community))
 				print(f"Community cards are now {str(self.community)[1:-1]}")
 			
-			winners = self.findWinners(self, playersIn)
+			winners = self.findWinners(playersIn)
+			print(winners)
 			win = (pot.lastTotal + sum(pot.bets.values())) // len(winners)
 			for player in winners:
 				player.money += win
