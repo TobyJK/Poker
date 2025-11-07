@@ -450,6 +450,7 @@ class HoldEm:
 		return self.bestHandKickers(5, {x: playerBestHands[x] for x in players})
 
 	def end(self):
+		self.ended = True
 		self.players.head = self.button
 
 		for pot in self.pots:
@@ -479,6 +480,7 @@ class HoldEm:
 						break
 
 	def newRound(self):
+		self.ended = False
 		fullList = self.players.createList()
 		print(fullList)
 		for p in fullList:
@@ -521,6 +523,59 @@ class HoldEm:
 		if self.checkIfOver():
 			self.end()
 
+	def flop(self):
+		# deal cards
+		self.community = self.deck.deal(3)
+
+		self.players.head = self.button
+
+		# set up action for betting
+		self.betting()
+		print(self.players.createList())
+
+		if self.checkIfOver():
+			self.end()
+	
+	def turn(self):
+		# deal cards
+		self.community += self.deck.deal()
+
+		self.players.head = self.button
+
+		# set up action for betting
+		self.betting()
+		print(self.players.createList())
+
+		if self.checkIfOver():
+			self.end()
+	
+	def river(self):
+		# deal cards
+		self.community += self.deck.deal()
+
+		self.players.head = self.button
+
+		# set up action for betting
+		self.betting()
+		print(self.players.createList())
+	
+	def main(self):
+		while True:
+			print(self.players.createList())
+			x = input("Press enter to continue. ")
+			if x != "":
+				break
+			self.newRound()
+			if not self.ended:
+				self.flop()
+			if not self.ended:
+				self.turn()
+			if not self.ended:
+				self.river()
+			if not self.ended:
+				self.end()
+			self.players.changeHead(self.button.next.player)
+
 if __name__ == "__main__":
 	game = HoldEm(1, 2, 50, ["Toby", "Lucy", "Tanheed", "Josh", "Liam", "Tom", "Harvey"])
-	game.newRound()
+	game.main()
